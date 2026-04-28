@@ -1,3 +1,27 @@
+# 🔕 Silence Zone App
+
+A smart React Native app that automatically detects quiet zones 
+(hospitals, mosques, libraries, universities) and alerts users 
+to silence their phones.
+
+## ✨ Features
+- 📍 Auto-detects nearby quiet zones using GPS
+- 🗺️ Live map with zone markers
+- 🔔 Local alerts and notifications
+- ➕ Add custom quiet zones
+- 📊 Zone visit history
+- ⏰ Schedule mode for auto-silence
+- 🌙 Dark / Light mode
+
+## 🛠️ Tech Stack
+- React Native (Expo)
+- OpenStreetMap (Overpass API)
+- AsyncStorage
+- Expo Location & Notifications
+- React Native Maps
+
+## 👩‍💻 Developer
+Ghulam Zahra — Faisalabad, Pakistan
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
