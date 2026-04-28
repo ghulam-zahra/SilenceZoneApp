@@ -12,18 +12,19 @@
       "supportsTablet": true
     },
     "android": {
-  "adaptiveIcon": {
-    "foregroundImage": "./assets/images/adaptive-icon.png",
-    "backgroundColor": "#ffffff"
-  },
-  "permissions": [
-    "ACCESS_FINE_LOCATION",
-    "ACCESS_COARSE_LOCATION",
-    "ACCESS_BACKGROUND_LOCATION",
-    "FOREGROUND_SERVICE",
-    "RECEIVE_BOOT_COMPLETED"
-  ]
-},
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "RECEIVE_BOOT_COMPLETED"
+      ],
+      "package": "com.ghulam_zahra.SilenceZoneApp"
+    },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
@@ -41,11 +42,18 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ee4dcdf5-5c94-4fa2-b1bd-0406c2376b0f"
+      }
     }
   }
 }
