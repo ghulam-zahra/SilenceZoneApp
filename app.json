@@ -21,7 +21,11 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png"
       },
-      "package": "com.ghulam_zahra.SilenceZoneApp"
+      "package": "com.ghulam_zahra.SilenceZoneApp",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -46,6 +50,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ee4dcdf5-5c94-4fa2-b1bd-0406c2376b0f"
+      }
     }
   }
 }
