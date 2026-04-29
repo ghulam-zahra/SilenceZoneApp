@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -11,6 +12,8 @@ import {
   useColorScheme,
   View
 } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import { getCurrentLocation, requestLocationPermission } from '../../utils/locationHelper';
 import { darkTheme, lightTheme } from '../../utils/theme';
 
 const ZONE_TYPES = [
@@ -27,13 +30,34 @@ export default function AddZoneScreen() {
   const theme = systemScheme === 'dark' ? darkTheme : lightTheme;
 
   const [name, setName] = useState('');
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
   const [radius, setRadius] = useState('100');
   const [selectedType, setSelectedType] = useState(ZONE_TYPES[0]);
   const [savedZones, setSavedZones] = useState<any[]>([]);
+  const [userLocation, setUserLocation] = useState<any>(null);
+  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [showMap, setShowMap] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => { loadSavedZones(); }, []);
+  useEffect(() => {
+    loadSavedZones();
+    getLocation();
+  }, []);
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  async function getLocation() {
+    const granted = await requestLocationPermission();
+    if (granted) {
+      const coords = await getCurrentLocation();
+      setUserLocation(coords);
+    }
+  }
 
   async function loadSavedZones() {
     try {
@@ -43,18 +67,24 @@ export default function AddZoneScreen() {
   }
 
   async function saveZone() {
-    if (!name || !latitude || !longitude) {
-      Alert.alert('Error', 'Please fill all fields!');
+    if (!name) {
+      Alert.alert('Error', 'Please enter zone name!');
       return;
     }
+    if (!selectedLocation) {
+      Alert.alert('Error', 'Please select location on map!');
+      return;
+    }
+
     const newZone = {
       id: Date.now(), name,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
+      latitude: selectedLocation.latitude,
+      longitude: selectedLocation.longitude,
       radius: parseInt(radius),
       icon: selectedType.icon,
       type: selectedType.label,
     };
+
     try {
       const existing = await AsyncStorage.getItem('customZones');
       const zones = existing ? JSON.parse(existing) : [];
@@ -62,8 +92,13 @@ export default function AddZoneScreen() {
       await AsyncStorage.setItem('customZones', JSON.stringify(zones));
       setSavedZones(zones);
       Alert.alert('✅ Saved!', `${name} zone added!`);
-      setName(''); setLatitude(''); setLongitude(''); setRadius('100');
-    } catch (e) { Alert.alert('Error', 'Could not save zone!'); }
+      setName('');
+      setSelectedLocation(null);
+      setRadius('100');
+      setShowMap(false);
+    } catch (e) {
+      Alert.alert('Error', 'Could not save zone!');
+    }
   }
 
   async function deleteZone(id: number) {
@@ -76,11 +111,16 @@ export default function AddZoneScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        <View style={styles.header}>
-          <Ionicons name="add-circle" size={45} color={theme.green} />
+        {/* Header */}
+        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+          <View style={[styles.headerIconCircle, { backgroundColor: theme.card }]}>
+            <Ionicons name="add-circle" size={40} color={theme.green} />
+          </View>
           <Text style={[styles.headerTitle, { color: theme.text }]}>Add Custom Zone</Text>
-          <Text style={[styles.headerSubtitle, { color: theme.subtext }]}>Add your own quiet zones</Text>
-        </View>
+          <Text style={[styles.headerSubtitle, { color: theme.subtext }]}>
+            Tap on map to select location
+          </Text>
+        </Animated.View>
 
         {/* Zone Type */}
         <View style={styles.section}>
@@ -90,7 +130,7 @@ export default function AddZoneScreen() {
               <TouchableOpacity
                 key={type.label}
                 style={[styles.typeBtn, { backgroundColor: theme.card },
-                  selectedType.label === type.label && { backgroundColor: theme.green }
+                  selectedType.label === type.label && { backgroundColor: type.color }
                 ]}
                 onPress={() => setSelectedType(type)}
               >
@@ -109,57 +149,107 @@ export default function AddZoneScreen() {
           </ScrollView>
         </View>
 
-        {/* Inputs */}
+        {/* Zone Name */}
         <View style={styles.section}>
           <Text style={[styles.label, { color: theme.text }]}>Zone Name</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
-            placeholder="e.g. My University Library"
-            placeholderTextColor={theme.subtext}
-            value={name} onChangeText={setName}
-          />
+          <View style={[styles.inputContainer, { backgroundColor: theme.card }]}>
+            <Ionicons name="pencil" size={18} color={theme.subtext} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              placeholder="e.g. My University Library"
+              placeholderTextColor={theme.subtext}
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.text }]}>Latitude</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
-            placeholder="e.g. 31.4180"
-            placeholderTextColor={theme.subtext}
-            value={latitude} onChangeText={setLatitude} keyboardType="numeric"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.text }]}>Longitude</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
-            placeholder="e.g. 73.0791"
-            placeholderTextColor={theme.subtext}
-            value={longitude} onChangeText={setLongitude} keyboardType="numeric"
-          />
-        </View>
-
+        {/* Radius */}
         <View style={styles.section}>
           <Text style={[styles.label, { color: theme.text }]}>Radius (meters)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
-            placeholder="e.g. 100"
-            placeholderTextColor={theme.subtext}
-            value={radius} onChangeText={setRadius} keyboardType="numeric"
-          />
+          <View style={[styles.inputContainer, { backgroundColor: theme.card }]}>
+            <Ionicons name="radio-button-on" size={18} color={theme.subtext} />
+            <TextInput
+              style={[styles.input, { color: theme.text }]}
+              placeholder="e.g. 100"
+              placeholderTextColor={theme.subtext}
+              value={radius}
+              onChangeText={setRadius}
+              keyboardType="numeric"
+            />
+          </View>
         </View>
 
-        {/* Tip */}
-        <View style={[styles.tipBox, { backgroundColor: theme.safeCard }]}>
-          <Ionicons name="information-circle" size={18} color={theme.green} />
-          <Text style={[styles.tipText, { color: theme.text }]}>
-            {"  "}Tip: Open Google Maps → Long press your location → Copy the coordinates
-          </Text>
+        {/* Map Picker */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: theme.text }]}>Select Location on Map</Text>
+
+          {/* Selected Location Badge */}
+          {selectedLocation && (
+            <View style={[styles.locationBadge, { backgroundColor: theme.safeCard }]}>
+              <Ionicons name="checkmark-circle" size={18} color={theme.green} />
+              <Text style={[styles.locationText, { color: theme.text }]}>
+                {"  "}{selectedLocation.latitude.toFixed(4)}, {selectedLocation.longitude.toFixed(4)}
+              </Text>
+            </View>
+          )}
+
+          {/* Map Toggle Button */}
+          <TouchableOpacity
+            style={[styles.mapToggleBtn, { backgroundColor: theme.card }]}
+            onPress={() => setShowMap(!showMap)}
+          >
+            <Ionicons name={showMap ? "chevron-up" : "map"} size={20} color={theme.green} />
+            <Text style={[styles.mapToggleText, { color: theme.text }]}>
+              {"  "}{showMap ? "Hide Map" : "Open Map to Select Location"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Map */}
+          {showMap && userLocation && (
+            <View style={styles.mapContainer}>
+              <Text style={[styles.mapHint, { color: theme.subtext }]}>
+                👆 Tap anywhere on map to select location
+              </Text>
+              <MapView
+                style={styles.map}
+                initialRegion={{
+                  latitude: userLocation.latitude,
+                  longitude: userLocation.longitude,
+                  latitudeDelta: 0.02,
+                  longitudeDelta: 0.02,
+                }}
+                showsUserLocation={true}
+                onPress={(e) => {
+                  setSelectedLocation(e.nativeEvent.coordinate);
+                }}
+              >
+                {selectedLocation && (
+                  <Marker
+                    coordinate={selectedLocation}
+                    title={name || "Selected Zone"}
+                    pinColor="green"
+                  />
+                )}
+              </MapView>
+              {selectedLocation && (
+                <TouchableOpacity
+                  style={[styles.confirmBtn, { backgroundColor: theme.green }]}
+                  onPress={() => setShowMap(false)}
+                >
+                  <Ionicons name="checkmark" size={20} color="#fff" />
+                  <Text style={styles.confirmBtnText}>  Confirm Location</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
 
         {/* Save Button */}
-        <TouchableOpacity style={[styles.saveBtn, { backgroundColor: theme.green }]} onPress={saveZone}>
+        <TouchableOpacity
+          style={[styles.saveBtn, { backgroundColor: theme.green }]}
+          onPress={saveZone}
+        >
           <Ionicons name="save" size={20} color="#fff" />
           <Text style={styles.saveBtnText}>  Save Zone</Text>
         </TouchableOpacity>
@@ -172,17 +262,24 @@ export default function AddZoneScreen() {
             </Text>
             {savedZones.map((zone) => (
               <View key={zone.id} style={[styles.savedRow, { borderBottomColor: theme.border }]}>
-                <Ionicons name={zone.icon as any} size={20} color={theme.green} />
-                <Text style={[styles.savedName, { color: theme.text }]}>{zone.name}</Text>
+                <View style={[styles.savedIconCircle, { backgroundColor: theme.background }]}>
+                  <Ionicons name={zone.icon as any} size={18} color={theme.green} />
+                </View>
+                <View style={styles.savedInfo}>
+                  <Text style={[styles.savedName, { color: theme.text }]}>{zone.name}</Text>
+                  <Text style={[styles.savedCoords, { color: theme.subtext }]}>
+                    {zone.latitude?.toFixed(3)}, {zone.longitude?.toFixed(3)} • {zone.radius}m
+                  </Text>
+                </View>
                 <TouchableOpacity onPress={() => deleteZone(zone.id)}>
-                  <Ionicons name="trash" size={20} color={theme.red} />
+                  <Ionicons name="trash" size={20} color="#F44336" />
                 </TouchableOpacity>
               </View>
             ))}
           </View>
         )}
 
-        <View style={{ height: 30 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -190,34 +287,69 @@ export default function AddZoneScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { alignItems: 'center', paddingTop: 30, paddingBottom: 20 },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', marginTop: 8 },
+  header: { alignItems: 'center', paddingTop: 30, paddingBottom: 24 },
+  headerIconCircle: {
+    width: 80, height: 80, borderRadius: 40,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 12, elevation: 4,
+  },
+  headerTitle: { fontSize: 24, fontWeight: 'bold' },
   headerSubtitle: { fontSize: 13, marginTop: 4 },
-  section: { marginHorizontal: 20, marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
-  input: { borderRadius: 14, padding: 14, fontSize: 15, elevation: 2 },
+  section: { marginHorizontal: 20, marginBottom: 18 },
+  label: { fontSize: 14, fontWeight: '700', marginBottom: 8 },
+  inputContainer: {
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: 14, paddingHorizontal: 14,
+    paddingVertical: 12, elevation: 2,
+  },
+  input: { flex: 1, fontSize: 15, marginLeft: 10 },
   typeBtn: {
     alignItems: 'center', borderRadius: 14,
-    padding: 12, marginRight: 10, minWidth: 85, elevation: 2,
+    padding: 12, marginRight: 10,
+    minWidth: 85, elevation: 2,
   },
-  typeLabel: { fontSize: 11, marginTop: 4 },
-  tipBox: {
-    marginHorizontal: 20, borderRadius: 14,
-    padding: 14, marginBottom: 20,
-    flexDirection: 'row', alignItems: 'flex-start',
+  typeLabel: { fontSize: 11, marginTop: 4, fontWeight: '600' },
+  locationBadge: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: 10, borderRadius: 10, marginBottom: 10,
   },
-  tipText: { fontSize: 13, lineHeight: 20, flex: 1 },
+  locationText: { fontSize: 13, fontWeight: '600' },
+  mapToggleBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: 14, borderRadius: 14, elevation: 2,
+  },
+  mapToggleText: { fontSize: 14, fontWeight: '600' },
+  mapContainer: { marginTop: 10, borderRadius: 16, overflow: 'hidden' },
+  mapHint: { fontSize: 12, textAlign: 'center', marginBottom: 8 },
+  map: { width: '100%', height: 280 },
+  confirmBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', padding: 14,
+    borderRadius: 12, marginTop: 8,
+  },
+  confirmBtnText: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   saveBtn: {
     marginHorizontal: 20, borderRadius: 16,
     padding: 18, alignItems: 'center',
-    elevation: 4, flexDirection: 'row', justifyContent: 'center',
+    elevation: 4, flexDirection: 'row',
+    justifyContent: 'center', marginBottom: 20,
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  savedBox: { marginHorizontal: 20, marginTop: 24, borderRadius: 20, padding: 20, elevation: 3 },
+  savedBox: {
+    marginHorizontal: 20, borderRadius: 20,
+    padding: 20, elevation: 3,
+  },
   savedTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 12 },
   savedRow: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 10, borderBottomWidth: 1,
   },
-  savedName: { flex: 1, fontSize: 14, marginLeft: 10 },
+  savedIconCircle: {
+    width: 38, height: 38, borderRadius: 19,
+    justifyContent: 'center', alignItems: 'center',
+    marginRight: 12,
+  },
+  savedInfo: { flex: 1 },
+  savedName: { fontSize: 14, fontWeight: '600' },
+  savedCoords: { fontSize: 11, marginTop: 2 },
 });

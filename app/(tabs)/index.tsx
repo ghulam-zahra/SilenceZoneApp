@@ -122,7 +122,6 @@ export default function App() {
       case 'library': return 'library';
       case 'university': return 'school';
       case 'school': return 'school-outline';
-      case 'college': return 'school-outline';
       default: return 'location';
     }
   }
@@ -132,27 +131,24 @@ export default function App() {
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Ionicons name="volume-mute" size={50} color={theme.green} />
-            <TouchableOpacity
-              style={[styles.toggleBtn, { backgroundColor: theme.card }]}
-              onPress={() => setIsDark(!isDark)}
-            >
-              <Ionicons
-                name={isDark ? 'sunny' : 'moon'}
-                size={22}
-                color={isDark ? '#FFD700' : '#555'}
-              />
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
-            Silence Zone
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: theme.subtext }]}>
-            Auto-detecting nearby quiet zones
-          </Text>
-        </View>
+      <View style={styles.header}>
+  <TouchableOpacity
+    style={[styles.toggleBtn, { backgroundColor: theme.card }]}
+    onPress={() => setIsDark(!isDark)}
+  >
+    <Ionicons
+      name={isDark ? 'sunny' : 'moon'}
+      size={20}
+      color={isDark ? '#FFD700' : '#555'}
+    />
+  </TouchableOpacity>
+  <Text style={[styles.headerTitle, { color: theme.text }]}>
+    Silence Zone
+  </Text>
+  <Text style={[styles.headerSubtitle, { color: theme.subtext }]}>
+    Auto-detecting nearby quiet zones
+  </Text>
+</View>
 
         {/* Status Card */}
         <View style={[styles.card,
@@ -207,7 +203,6 @@ export default function App() {
           )}
         </View>
 
-        {/* Footer */}
         <View style={styles.footerRow}>
           <Ionicons
             name={loading ? 'sync' : 'checkmark-circle'}
@@ -226,30 +221,26 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 20,
-  },
-  headerTop: {
-    width: '100%',
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  toggleBtn: {
-    position: 'absolute',
-    right: 20,
-    padding: 10,
-    borderRadius: 20,
-    elevation: 3,
-  },
-  headerTitle: {
-    fontSize: 28, fontWeight: 'bold', marginTop: 4,
-  },
-  headerSubtitle: { fontSize: 14, marginTop: 4 },
+ header: {
+  alignItems: 'center',
+  marginTop: 40,
+  marginBottom: 20,
+  paddingHorizontal: 20,
+},
+headerTitle: {
+  fontSize: 30,
+  fontWeight: 'bold',
+  textAlign: 'center',
+  marginTop: 8,
+},
+toggleBtn: {
+  padding: 10,
+  borderRadius: 20,
+  elevation: 3,
+  alignSelf: 'flex-end',
+  marginRight: 0,
+},
+  headerSubtitle: { fontSize: 14 },
   card: {
     marginHorizontal: 20,
     borderRadius: 24,
