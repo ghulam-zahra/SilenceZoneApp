@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { WebView } from 'react-native-webview';
 import { useAppTheme } from '../../utils/ThemeContext';
 import { getCurrentLocation, requestLocationPermission } from '../../utils/locationHelper';
 
@@ -24,12 +24,16 @@ export default function AddZoneScreen() {
   const [userLocation, setUserLocation] = useState<any>(null);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [showMap, setShowMap] = useState(false);
+  const [webViewRef, setWebViewRef] = useState<any>(null);
 
   useEffect(() => { loadSavedZones(); getLocation(); }, []);
 
   async function getLocation() {
     const granted = await requestLocationPermission();
-    if (granted) { const coords = await getCurrentLocation(); setUserLocation(coords); }
+    if (granted) {
+      const coords = await getCurrentLocation();
+      setUserLocation(coords);
+    }
   }
 
   async function loadSavedZones() {
@@ -69,6 +73,51 @@ export default function AddZoneScreen() {
     setSavedZones(updated);
   }
 
+  const getMapHTML = () => {
+    if (!userLocation) return '';
+    return `
+      <!DOCTYPE html><html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <style>body{margin:0;padding:0;}#map{width:100vw;height:100vh;}</style>
+      </head>
+      <body>
+        <div id="map"></div>
+        <script>
+          var map = L.map('map').setView([${userLocation.latitude}, ${userLocation.longitude}], 15);
+          L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OpenStreetMap' }).addTo(map);
+          
+          var selectedMarker = null;
+          
+          L.marker([${userLocation.latitude}, ${userLocation.longitude}], {
+            icon: L.divIcon({ html: '<div style="background:#10B981;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 6px rgba(0,0,0,0.5)"></div>', iconSize: [14,14] })
+          }).addTo(map).bindPopup('You are here');
+          
+          map.on('click', function(e) {
+            if (selectedMarker) map.removeLayer(selectedMarker);
+            selectedMarker = L.marker(e.latlng, {
+              icon: L.divIcon({ html: '<div style="background:#EF4444;width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 0 6px rgba(0,0,0,0.5)"></div>', iconSize: [14,14] })
+            }).addTo(map).bindPopup('Selected Zone').openPopup();
+            
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              latitude: e.latlng.lat,
+              longitude: e.latlng.lng
+            }));
+          });
+        </script>
+      </body></html>
+    `;
+  };
+
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      setSelectedLocation(data);
+    } catch (e) {}
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -78,6 +127,7 @@ export default function AddZoneScreen() {
           <Text style={[styles.headerSubtitle, { color: theme.subtext }]}>Tap on map to select location</Text>
         </View>
 
+        {/* Zone Type */}
         <View style={styles.section}>
           <Text style={[styles.label, { color: theme.text }]}>Zone Type</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -92,6 +142,7 @@ export default function AddZoneScreen() {
           </ScrollView>
         </View>
 
+        {/* Zone Name */}
         <View style={styles.section}>
           <Text style={[styles.label, { color: theme.text }]}>Zone Name</Text>
           <View style={[styles.inputContainer, { backgroundColor: theme.card }]}>
@@ -100,6 +151,7 @@ export default function AddZoneScreen() {
           </View>
         </View>
 
+        {/* Radius */}
         <View style={styles.section}>
           <Text style={[styles.label, { color: theme.text }]}>Radius (meters)</Text>
           <View style={[styles.inputContainer, { backgroundColor: theme.card }]}>
@@ -108,28 +160,34 @@ export default function AddZoneScreen() {
           </View>
         </View>
 
+        {/* Map Picker */}
         <View style={styles.section}>
           <Text style={[styles.label, { color: theme.text }]}>Select Location on Map</Text>
+
           {selectedLocation && (
             <View style={[styles.locationBadge, { backgroundColor: theme.safeCard }]}>
               <Ionicons name="checkmark-circle" size={18} color={theme.green} />
-              <Text style={[styles.locationText, { color: theme.text }]}>  {selectedLocation.latitude.toFixed(4)}, {selectedLocation.longitude.toFixed(4)}</Text>
+              <Text style={[styles.locationText, { color: theme.text }]}>
+                {"  "}{selectedLocation.latitude.toFixed(4)}, {selectedLocation.longitude.toFixed(4)}
+              </Text>
             </View>
           )}
+
           <TouchableOpacity style={[styles.mapToggleBtn, { backgroundColor: theme.card }]} onPress={() => setShowMap(!showMap)}>
             <Ionicons name={showMap ? "chevron-up" : "map"} size={20} color={theme.green} />
-            <Text style={[styles.mapToggleText, { color: theme.text }]}>  {showMap ? "Hide Map" : "Open Map to Select Location"}</Text>
+            <Text style={[styles.mapToggleText, { color: theme.text }]}>{"  "}{showMap ? "Hide Map" : "Open Map to Select Location"}</Text>
           </TouchableOpacity>
 
           {showMap && userLocation && (
             <View style={styles.mapContainer}>
               <Text style={[styles.mapHint, { color: theme.subtext }]}>👆 Tap anywhere on map to select location</Text>
-              <MapView style={styles.map}
-                initialRegion={{ latitude: userLocation.latitude, longitude: userLocation.longitude, latitudeDelta: 0.02, longitudeDelta: 0.02 }}
-                showsUserLocation={true}
-                onPress={(e) => setSelectedLocation(e.nativeEvent.coordinate)}>
-                {selectedLocation && <Marker coordinate={selectedLocation} title={name || "Selected Zone"} pinColor="green" />}
-              </MapView>
+              <WebView
+                style={styles.map}
+                source={{ html: getMapHTML() }}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                onMessage={handleWebViewMessage}
+              />
               {selectedLocation && (
                 <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: theme.green }]} onPress={() => setShowMap(false)}>
                   <Ionicons name="checkmark" size={20} color="#fff" />
@@ -140,16 +198,19 @@ export default function AddZoneScreen() {
           )}
         </View>
 
+        {/* Tip */}
         <View style={[styles.tipBox, { backgroundColor: theme.safeCard }]}>
           <Ionicons name="information-circle" size={18} color={theme.green} />
           <Text style={[styles.tipText, { color: theme.text }]}>  Tip: Open Google Maps → Long press your location → Copy the coordinates</Text>
         </View>
 
+        {/* Save Button */}
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: theme.green }]} onPress={saveZone}>
           <Ionicons name="save" size={20} color="#fff" />
           <Text style={styles.saveBtnText}>  Save Zone</Text>
         </TouchableOpacity>
 
+        {/* Saved Zones */}
         {savedZones.length > 0 && (
           <View style={[styles.savedBox, { backgroundColor: theme.card }]}>
             <Text style={[styles.savedTitle, { color: theme.text }]}>My Custom Zones ({savedZones.length})</Text>
@@ -192,7 +253,7 @@ const styles = StyleSheet.create({
   mapToggleText: { fontSize: 14, fontWeight: '600' },
   mapContainer: { marginTop: 10, borderRadius: 16, overflow: 'hidden' },
   mapHint: { fontSize: 12, textAlign: 'center', marginBottom: 8 },
-  map: { width: '100%', height: 280 },
+  map: { width: '100%', height: 300 },
   confirmBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 12, marginTop: 8 },
   confirmBtnText: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   tipBox: { marginHorizontal: 20, borderRadius: 14, padding: 14, marginBottom: 20, flexDirection: 'row', alignItems: 'flex-start' },
