@@ -1,21 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect, useState } from 'react';
-import {
-    Alert,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useColorScheme,
-    View
-} from 'react-native';
-import { darkTheme, lightTheme } from '../../utils/theme';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAppTheme } from '../../utils/ThemeContext';
 
 export default function HistoryScreen() {
-  const systemScheme = useColorScheme();
-  const theme = systemScheme === 'dark' ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
   const [history, setHistory] = useState<any[]>([]);
 
   useEffect(() => { loadHistory(); }, []);
@@ -30,22 +20,13 @@ export default function HistoryScreen() {
   async function clearHistory() {
     Alert.alert('Clear History', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive',
-        onPress: async () => {
-          await AsyncStorage.removeItem('zoneHistory');
-          setHistory([]);
-        }
-      }
+      { text: 'Delete', style: 'destructive', onPress: async () => { await AsyncStorage.removeItem('zoneHistory'); setHistory([]); } }
     ]);
   }
 
   function formatDate(timestamp: number) {
     const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', {
-      day: 'numeric', month: 'short',
-      hour: '2-digit', minute: '2-digit'
-    });
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
 
   function getZoneIcon(type: string) {
@@ -62,36 +43,27 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-
         <View style={styles.header}>
           <Ionicons name="time" size={45} color={theme.green} />
           <Text style={[styles.headerTitle, { color: theme.text }]}>Zone History</Text>
-          <Text style={[styles.headerSubtitle, { color: theme.subtext }]}>
-            {history.length} zones visited
-          </Text>
+          <Text style={[styles.headerSubtitle, { color: theme.subtext }]}>{history.length} zones visited</Text>
         </View>
 
-        {/* Stats */}
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: theme.card }]}>
             <Text style={[styles.statNumber, { color: theme.text }]}>{history.length}</Text>
             <Text style={[styles.statLabel, { color: theme.subtext }]}>Total Visits</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>
-              {new Set(history.map(h => h.name)).size}
-            </Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{new Set(history.map(h => h.name)).size}</Text>
             <Text style={[styles.statLabel, { color: theme.subtext }]}>Unique Zones</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-            <Text style={[styles.statNumber, { color: theme.text }]}>
-              {history.filter(h => h.type === 'hospital' || h.type === 'Hospital').length}
-            </Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{history.filter(h => h.type === 'hospital' || h.type === 'Hospital').length}</Text>
             <Text style={[styles.statLabel, { color: theme.subtext }]}>Hospitals</Text>
           </View>
         </View>
 
-        {/* History List */}
         <View style={[styles.listBox, { backgroundColor: theme.card }]}>
           <View style={styles.listHeader}>
             <Text style={[styles.listTitle, { color: theme.text }]}>Recent Visits</Text>
@@ -106,36 +78,25 @@ export default function HistoryScreen() {
             <View style={styles.emptyBox}>
               <Ionicons name="location-outline" size={50} color={theme.subtext} />
               <Text style={[styles.emptyText, { color: theme.text }]}>No history yet!</Text>
-              <Text style={[styles.emptySubtext, { color: theme.subtext }]}>
-                Visit a quiet zone to see history here
-              </Text>
+              <Text style={[styles.emptySubtext, { color: theme.subtext }]}>Visit a quiet zone to see history here</Text>
             </View>
           ) : (
             [...history].reverse().map((item, index) => (
               <View key={index} style={[styles.historyRow, { borderBottomColor: theme.border }]}>
                 <View style={[styles.iconCircle, { backgroundColor: theme.background }]}>
-                  <Ionicons
-                    name={getZoneIcon(item.type) as any}
-                    size={22}
-                    color={theme.green}
-                  />
+                  <Ionicons name={getZoneIcon(item.type) as any} size={22} color={theme.green} />
                 </View>
                 <View style={styles.historyInfo}>
                   <Text style={[styles.historyName, { color: theme.text }]}>{item.name}</Text>
-                  <Text style={[styles.historyDate, { color: theme.subtext }]}>
-                    {formatDate(item.timestamp)}
-                  </Text>
+                  <Text style={[styles.historyDate, { color: theme.subtext }]}>{formatDate(item.timestamp)}</Text>
                 </View>
                 <View style={[styles.typeBadge, { backgroundColor: theme.background }]}>
-                  <Text style={[styles.typeBadgeText, { color: theme.subtext }]}>
-                    {item.type || 'Zone'}
-                  </Text>
+                  <Text style={[styles.typeBadgeText, { color: theme.subtext }]}>{item.type || 'Zone'}</Text>
                 </View>
               </View>
             ))
           )}
         </View>
-
         <View style={{ height: 30 }} />
       </ScrollView>
     </SafeAreaView>
