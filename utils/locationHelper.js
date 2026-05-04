@@ -71,7 +71,6 @@ function getFallbackZones() {
     { id: 5, name: "Lyallpur Museum Library", latitude: 31.4167, longitude: 73.0811, radius: 100, icon: "📚", type: "library" },
     { id: 6, name: "Chiniot Hospital", latitude: 31.7199, longitude: 72.9787, radius: 200, icon: "🏥", type: "hospital" },
     { id: 7, name: "Jhang Hospital", latitude: 31.2681, longitude: 72.3181, radius: 200, icon: "🏥", type: "hospital" },
-    { id: 8, name: "My Current Location Test", latitude: 31.4336, longitude: 73.0683, radius: 5000, icon: "📍", type: "other" }
   ];
 
 }
