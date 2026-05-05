@@ -44,7 +44,7 @@ TaskManager.defineTask(BACKGROUND_TASK, async () => {
         await Notifications.scheduleNotificationAsync({
           content: {
             title: '🔕 Quiet Zone Alert!',
-            body: `You entered ${zone.name}. Please keep your phone silent 🔕`,
+            body: `You enter ${zone.name}. Please silent your phone 🔕`,
           },
           trigger: null,
         });

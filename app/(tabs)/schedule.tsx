@@ -78,17 +78,22 @@ export default function ScheduleScreen() {
     setShowPicker(false);
   }
 
-  function checkActiveSchedule(list = schedules) {
-    const now = new Date();
-    const currentDay = now.getDay();
-    const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const active = list.find(s => {
-      if (!s.enabled) return false;
-      if (!s.days.includes(currentDay)) return false;
-      return currentTime >= s.startTime && currentTime <= s.endTime;
-    });
-    setActiveNow(active || null);
-  }
+function checkActiveSchedule(list = schedules) {
+  const now = new Date();
+  const currentDay = now.getDay();
+  const currentHour = String(now.getHours()).padStart(2, '0');
+  const currentMin = String(now.getMinutes()).padStart(2, '0');
+  const currentTime = `${currentHour}:${currentMin}`;
+  
+  console.log('Current time:', currentTime, 'Day:', currentDay);
+  
+  const active = list.find(s => {
+    if (!s.enabled) return false;
+    if (!s.days.includes(currentDay)) return false;
+    return currentTime >= s.startTime && currentTime <= s.endTime;
+  });
+  setActiveNow(active || null);
+}
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
