@@ -56,7 +56,7 @@ export default function HomeScreen() {
           historyArr.push(historyItem);
           await AsyncStorage.setItem('zoneHistory', JSON.stringify(historyArr));
 
-          Alert.alert(`${zone.icon} Quiet Zone!`, `You entered ${zone.name}.\nPlease keep your phone silent 🔕`, [{ text: 'OK' }]);
+          Alert.alert(`${zone.icon} Quiet Zone!`, `You entered ${zone.name}.Please keep your phone silent 🔕`, [{ text: 'OK' }]);
 
           await Notifications.scheduleNotificationAsync({
             content: {
@@ -138,8 +138,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, marginTop: 40, marginBottom: 20 },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  header: { alignItems: 'center', marginTop: 40, marginBottom: 20 },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, width: '100%', paddingHorizontal: 20 },
   headerTitle: { fontSize: 28, fontWeight: 'bold' },
   toggleBtn: { padding: 10, borderRadius: 20, elevation: 3 },
   headerSubtitle: { fontSize: 14 },
