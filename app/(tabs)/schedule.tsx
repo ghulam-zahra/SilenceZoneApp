@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Notifications from 'expo-notifications';
 import React, { useEffect, useState } from 'react';
 import { Platform, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useAppTheme } from '../../utils/ThemeContext';
@@ -23,7 +24,12 @@ export default function ScheduleScreen() {
   const [editingId, setEditingId] = useState<number|null>(null);
   const [pickerDate, setPickerDate] = useState(new Date());
 
-  useEffect(() => { loadSchedules(); checkActiveSchedule(); }, []);
+  useEffect(() => {
+  loadSchedules();
+  checkActiveSchedule();
+  const interval = setInterval(() => checkActiveSchedule(), 60000);
+  return () => clearInterval(interval);
+}, []);
 
   async function loadSchedules() {
     try {
@@ -78,23 +84,28 @@ export default function ScheduleScreen() {
     setShowPicker(false);
   }
 
-function checkActiveSchedule(list = schedules) {
+async function checkActiveSchedule(list = schedules) {
   const now = new Date();
   const currentDay = now.getDay();
-  const currentHour = String(now.getHours()).padStart(2, '0');
-  const currentMin = String(now.getMinutes()).padStart(2, '0');
-  const currentTime = `${currentHour}:${currentMin}`;
-  
-  console.log('Current time:', currentTime, 'Day:', currentDay);
-  
+  const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const active = list.find(s => {
     if (!s.enabled) return false;
     if (!s.days.includes(currentDay)) return false;
     return currentTime >= s.startTime && currentTime <= s.endTime;
   });
   setActiveNow(active || null);
-}
 
+  // Notification bhejo jab schedule active ho
+  if (active) {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: `⏰ Schedule Active!`,
+        body: `${active.name} schedule is active. Please silent your phone 🔕`,
+      },
+      trigger: null,
+    });
+  }
+}
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
