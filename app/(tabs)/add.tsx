@@ -120,7 +120,8 @@ export default function AddZoneScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false}
+      scrollEnabled= {!showMap}>
         <View style={styles.header}>
           <Ionicons name="add-circle" size={45} color={theme.green} />
           <Text style={[styles.headerTitle, { color: theme.text }]}>Add Custom Zone</Text>

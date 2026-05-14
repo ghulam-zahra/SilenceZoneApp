@@ -9,8 +9,8 @@ import { fetchNearbyQuietZones, getCurrentLocation, getDistance, requestLocation
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
     shouldShowBanner: true,
     shouldShowList: true,
   }),
@@ -92,13 +92,11 @@ export default function HomeScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>Silence Zone</Text>
-            <TouchableOpacity style={[styles.toggleBtn, { backgroundColor: theme.card }]} onPress={() => setIsDark(!isDark)}>
-              <Ionicons name={isDark ? 'sunny' : 'moon'} size={22} color={isDark ? '#FFD700' : '#555'} />
-            </TouchableOpacity>
-          </View>
-          <Text style={[styles.headerSubtitle, { color: theme.subtext }]}>Auto-detecting nearby quiet zones</Text>
+        <TouchableOpacity style={[styles.toggleBtn, { backgroundColor: theme.card, alignSelf: 'flex-end', marginRight: 20 }]} onPress={() => setIsDark(!isDark)}>
+        <Ionicons name={isDark ? 'sunny' : 'moon'} size={22} color={isDark ? '#FFD700' : '#555'} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: theme.text, textAlign: 'center' }]}>Silence Zone</Text>
+        <Text style={[styles.headerSubtitle, { color: theme.subtext, textAlign: 'center' }]}>Auto-detecting nearby quiet zones</Text>
         </View>
 
         <View style={[styles.card, currentZone ? { backgroundColor: theme.alertCard, borderLeftColor: theme.red } : { backgroundColor: theme.safeCard, borderLeftColor: theme.green }]}>
@@ -138,7 +136,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { alignItems: 'center', marginTop: 40, marginBottom: 20 },
+  header: { alignItems: 'center', marginTop: 20, marginBottom: 20 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, width: '100%', paddingHorizontal: 20 },
   headerTitle: { fontSize: 28, fontWeight: 'bold' },
   toggleBtn: { padding: 10, borderRadius: 20, elevation: 3 },
