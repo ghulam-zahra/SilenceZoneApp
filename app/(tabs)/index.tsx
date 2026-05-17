@@ -60,7 +60,7 @@ export default function HomeScreen() {
 
           await Notifications.scheduleNotificationAsync({
             content: {
-              title: `${zone.icon} Quiet Zone Alert!`,
+              title: `${zone.name} Quiet Zone Alert!`,
               body: `You entered ${zone.name}. Please keep your phone silent 🔕`,
             },
             trigger: null,

@@ -25,19 +25,28 @@ export default function ScheduleScreen() {
   const [pickerDate, setPickerDate] = useState(new Date());
 
   useEffect(() => {
-  loadSchedules();
-  checkActiveSchedule();
-  const interval = setInterval(() => checkActiveSchedule(), 60000);
-  return () => clearInterval(interval);
+  loadSchedules().then((loaded) => {
+    checkActiveSchedule(loaded);
+    const interval = setInterval(() => {
+      checkActiveSchedule(loaded);
+    }, 10000);
+    return () => clearInterval(interval);
+  });
 }, []);
 
-  async function loadSchedules() {
-    try {
-      const saved = await AsyncStorage.getItem('schedules');
-      if (saved) setSchedules(JSON.parse(saved));
-    } catch(e) {}
+async function loadSchedules() {
+  try {
+    const saved = await AsyncStorage.getItem('schedules');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setSchedules(parsed);
+      return parsed;
+    }
+    return DEFAULT_SCHEDULES;
+  } catch(e) {
+    return DEFAULT_SCHEDULES;
   }
-
+}
   async function saveSchedules(updated: any[]) {
     setSchedules(updated);
     await AsyncStorage.setItem('schedules', JSON.stringify(updated));
